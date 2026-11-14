@@ -32,7 +32,7 @@ A macOS-style desktop shell for **Hyprland**, built with [EWW](https://github.co
 
 ## 🎬 Showcase
 
-[▶ Watch the full showcase video](https://github.com/Arscma/eww-mac-shell/releases)
+[▶ Watch the full showcase video](https://github.com/Arscma/eww-mac-shell/releases/download/v1.0.0/ewwmacosshowcase.mp4)
 
 ---
 
