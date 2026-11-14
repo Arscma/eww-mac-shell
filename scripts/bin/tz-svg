@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+import json, math, os, re, glob, time
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+SCSS = os.path.expanduser("$HOME/.config/eww/eww.scss")
+col = {"face": "#ffffff", "hand": "#1c1c1e", "tick": "#8e8e93", "sec": "#ff9f0a"}
+try:
+    for k, v in re.findall(r'^\$clock-(face|hand|tick|sec):\s*([^;]+);', open(SCSS).read(), re.M):
+        col[k] = v.strip()
+except OSError:
+    pass
+
+ZONES = [("TOKYO", "Asia/Tokyo"), ("JAKARTA", "Asia/Jakarta"), ("DUBLIN", "Europe/Dublin")]
+
+def ln(a, r1, r2, w, c):
+    x1, y1 = 100 + r1 * math.sin(a), 100 - r1 * math.cos(a)
+    x2, y2 = 100 + r2 * math.sin(a), 100 - r2 * math.cos(a)
+    return (f'<line x1="{x1:.2f}" y1="{y1:.2f}" x2="{x2:.2f}" y2="{y2:.2f}" '
+            f'stroke="{c}" stroke-width="{w}" stroke-linecap="round"/>')
+
+def svg(t):
+    h, m, s = t.hour % 12, t.minute, t.second
+    out = ['<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">',
+           f'<circle cx="100" cy="100" r="98" fill="{col["face"]}"/>']
+    for i in range(12):
+        out.append(ln(math.radians(i * 30), 80, 92, 5, col["tick"]))
+    out.append(ln(math.radians((h + m / 60) * 30), -6, 52, 7, col["hand"]))
+    out.append(ln(math.radians((m + s / 60) * 6), -6, 78, 5, col["hand"]))
+    out.append(ln(math.radians(s * 6), -18, 84, 2, col["sec"]))
+    out.append(f'<circle cx="100" cy="100" r="5" fill="{col["sec"]}"/>'
+               f'<circle cx="100" cy="100" r="2" fill="{col["face"]}"/></svg>')
+    return "".join(out)
+
+local = datetime.now().astimezone()
+stamp = time.time_ns()
+res = []
+for i, (city, tz) in enumerate(ZONES):
+    t = datetime.now(ZoneInfo(tz))
+    path = f"/tmp/eww-tz-{stamp}-{i}.svg"
+    with open(path, "w") as f:
+        f.write(svg(t))
+    off = (t.utcoffset() - local.utcoffset()).total_seconds() / 3600
+    dd = (t.date() - local.date()).days
+    res.append({
+        "city": city,
+        "img": path,
+        "day": {0: "Today", 1: "Tomorrow", -1: "Yesterday"}.get(dd, ""),
+        "off": f"{off:+g}HRS",
+    })
+
+for f in glob.glob("/tmp/eww-tz-*.svg"):
+    if time.time() - os.path.getmtime(f) > 60:
+        os.remove(f)
+print(json.dumps(res))

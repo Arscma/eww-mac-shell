@@ -1,0 +1,20 @@
+#!/bin/bash
+m=$1; s="$(dirname "$0")/dt-set"
+close_all() {
+  for w in clock_digital clock_analog clock_timezones; do
+    eww close "$w" >/dev/null 2>&1
+  done
+}
+if [ "$(eww get clock_on)" = "true" ] && [ "$(eww get clock_mode)" = "$m" ]; then
+  "$s" clock_on false
+  close_all
+else
+  close_all
+  "$s" clock_mode $m
+  "$s" clock_on true
+  eww open clock_$m
+fi
+eww update dt_menu_reveal=false
+sleep 0.2
+eww close dt_menu
+eww update clock_sub=false

@@ -1,0 +1,27 @@
+#!/bin/bash
+#!/bin/bash
+SCSS="$HOME/.config/eww/eww.scss"
+read -r FACE HAND TICK SEC < <(awk -F'[:;]' '/^\$clock-(face|hand|tick|sec):/{gsub(/ /,"",$2); v[$1]=$2} END{print v["$clock-face"],v["$clock-hand"],v["$clock-tick"],v["$clock-sec"]}' "$SCSS")
+FACE=${FACE:-#ffffff}; HAND=${HAND:-#1c1c1e}; TICK=${TICK:-#8e8e93}; SEC=${SEC:-#ff9f0a}
+
+out=/tmp/eww-clock-$(date +%s%N).svg
+read -r h m s < <(date '+%-I %-M %-S')
+
+awk -v h="$h" -v m="$m" -v s="$s" -v face="$FACE" -v hand="$HAND" -v tick="$TICK" -v sec="$SEC" '
+function ln(a, r1, r2, w, c) {
+  printf "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-width=\"%s\" stroke-linecap=\"round\"/>",
+    100 + r1*sin(a), 100 - r1*cos(a), 100 + r2*sin(a), 100 - r2*cos(a), c, w
+}
+BEGIN {
+  pi = 3.14159265358979
+  printf "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\">"
+  printf "<circle cx=\"100\" cy=\"100\" r=\"98\" fill=\"%s\"/>", face
+  for (i = 0; i < 12; i++) ln(i*30*pi/180, 80, 92, 5, tick)
+  ln(((h % 12) + m/60) * 30 * pi/180, -6, 52, 7, hand)
+  ln((m + s/60) * 6 * pi/180,         -6, 78, 5, hand)
+  ln(s * 6 * pi/180,                 -18, 84, 2, sec)
+  printf "<circle cx=\"100\" cy=\"100\" r=\"5\" fill=\"%s\"/><circle cx=\"100\" cy=\"100\" r=\"2\" fill=\"%s\"/></svg>", sec, face
+}' > "$out"
+
+find /tmp -maxdepth 1 -name 'eww-clock-*.svg' ! -path "$out" -delete
+echo "$out"

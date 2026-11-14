@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# usage: hypr-listen <command> [args...]
+sig="${HYPRLAND_INSTANCE_SIGNATURE:-$(ls -t "$XDG_RUNTIME_DIR/hypr" | head -1)}"
+sock="$XDG_RUNTIME_DIR/hypr/$sig/.socket2.sock"
+
+if [ -n "$DEDUPE" ]; then last=$("$@"); echo "$last"; else "$@"; fi
+
+coproc SOC { exec socat -u "UNIX-CONNECT:$sock" -; }
+trap 'kill $SOC_PID 2>/dev/null' EXIT TERM INT HUP
+
+while read -r line <&"${SOC[0]}"; do
+  case "${line%%>>*}" in
+    openwindow|closewindow|movewindow*|windowtitle*|activewindow*|workspace*|activespecial*|fullscreen|changefloatingmode)
+      while read -r -t 0.05 _ <&"${SOC[0]}"; do :; done
+      if [ -n "$DEDUPE" ]; then
+        o=$("$@"); [ -n "$o" ] && [ "$o" != "$last" ] && { echo "$o"; last=$o; }
+      else "$@"; fi
+      ;;
+  esac
+done

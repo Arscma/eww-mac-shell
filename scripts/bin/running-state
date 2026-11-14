@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+hyprctl clients -j | jq -c '
+  [.[] | select(.mapped and .class != "")
+   | {k: (.class|ascii_downcase), m: (.workspace.name|startswith("special"))}]
+  | group_by(.k)
+  | map({(.[0].k): {
+      st: (if any(.[]; .m|not) then "open" else "min" end),
+      n: ([.[] | select(.m|not)] | length)
+    }})
+  | add // {}'

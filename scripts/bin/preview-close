@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+hyprctl dispatch "hl.dsp.window.close({ window = \"address:$1\" })" >/dev/null
+items=$(eww get preview_items | jq -c --arg a "$1" 'map(select(.address != $a))')
+if [ "$items" = "[]" ]; then
+  eww update preview_open=false preview_items="[]"
+else
+  eww update preview_items="$items"
+fi

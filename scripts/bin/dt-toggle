@@ -1,0 +1,12 @@
+#!/bin/bash
+w=$1; s="$(dirname "$0")/dt-set"
+if [ "$(eww get ${w}_on)" = "true" ]; then
+  "$s" ${w}_on false
+  eww close ${w}_widget
+else
+  "$s" ${w}_on true
+  eww open ${w}_widget
+fi
+eww update dt_menu_reveal=false
+sleep 0.2
+eww close dt_menu

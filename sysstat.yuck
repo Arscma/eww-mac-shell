@@ -1,0 +1,81 @@
+(defvar sysstat_open false)
+
+(defpoll sysstat :interval "1s" :run-while sysstat_open
+  :initial '{"cpu_name":"-","cpu_user":0,"cpu_sys":0,"cpu_idle":100,"cpu_temp":0,"ram_txt":"-","procs":[],"gpu_temp":0,"gpu_core":0,"gpu_mem_clk":"0","vram_p":0,"vram_txt":"0/0 MB","gpu_busy":0,"disk":0,"disk_peak":0,"uptime":"-"}'
+  `$HOME/.config/eww/scripts/sysstat.sh`)
+
+(defwidget sys-sep [] (box :class "sys-sep"))
+
+(defwidget sys-legend [cls text]
+  (box :space-evenly false :spacing 8 :halign "start"
+    (box :class "legend-dot ${cls}")
+    (label :text text)))
+
+(defwidget sys-row [k v]
+  (box :space-evenly false :spacing 24
+    (label :halign "start" :hexpand true :text k)
+    (label :halign "end" :text v)))
+
+(defwidget sys-bar [pct]
+  (progress :class "sys-bar" :value pct))
+
+(defwidget sys-row [k v]
+  (box :space-evenly false :spacing 24
+    (label :halign "start" :hexpand true :text k)
+    (label :halign "end" :text v)))
+
+(defwidget sysstat-card []
+  (box :class "sys-card" :orientation "v" :space-evenly false :spacing 6
+    (label :class "sys-title" :halign "center" :text {sysstat.cpu_name})
+    (box :class "sys-rect" :space-evenly false :halign "start"
+      (box :class "seg-user" :width {round(300*sysstat.cpu_user/100, 0)})
+      (box :class "seg-sys"  :width {round(300*sysstat.cpu_sys/100, 0)})
+      (box :class "seg-idle" :width {round(300*sysstat.cpu_idle/100, 0)}))
+    (sys-legend :cls "seg-user" :text "User: ${sysstat.cpu_user}%")
+    (sys-legend :cls "seg-sys"  :text "System: ${sysstat.cpu_sys}%")
+    (sys-legend :cls "seg-idle" :text "Idle: ${sysstat.cpu_idle}%")
+
+    (sys-sep)
+    (sys-row :k "CPU Temperature" :v "${sysstat.cpu_temp}°C")
+
+    (sys-sep)
+    (box :space-evenly false
+      (label :class "sys-title" :halign "start" :hexpand true :text "Processes")
+      (label :halign "end" :text {sysstat.ram_txt}))
+    (box :orientation "v" :space-evenly false :spacing 6
+      (for p in {sysstat.procs}
+        (sys-row :k {p.name} :v "${p.size} · ${p.pct}%")))
+
+    (sys-sep)
+    (label :class "sys-title" :halign "center" :text "AMD Radeon Graphics")
+    (sys-row :k "Temperature" :v "${sysstat.gpu_temp}°C")
+    (sys-row :k "Core Clock" :v "${sysstat.gpu_core} MHz")
+    (sys-row :k "Memory Clock" :v "${sysstat.gpu_mem_clk} GHz")
+    (sys-row :k "Memory" :v {sysstat.vram_txt})
+    (sys-bar :pct {sysstat.vram_p})
+    (sys-row :k "Processor" :v "${sysstat.gpu_busy}%")
+    (sys-bar :pct {sysstat.gpu_busy})
+
+    (sys-sep)
+    (label :class "sys-title" :halign "center" :text "Storage Load")
+    (box :class "sys-rect" :space-evenly false :halign "start"
+      (box :class "seg-user" :width {round(300*sysstat.disk/100, 0)})
+      (box :class "seg-idle" :width {round(300*(100-sysstat.disk)/100, 0)}))
+    (sys-row :k "Peak Load" :v "${sysstat.disk_peak}%")
+
+    (sys-sep)
+    (label :class "sys-title" :halign "center" :text "Uptime")
+    (label :halign "start" :text {sysstat.uptime})))
+
+(defwidget sysstat-revealer []
+  (revealer :reveal sysstat_open :transition "slidedown" :duration "250ms"
+    (sysstat-card)))
+
+(defwindow sysstat
+  :monitor 0
+  :namespace "eww-sysstat"
+  :geometry (geometry :x "5px" :y "0px" :width "0px" :height "0px" :anchor "top right")
+  :stacking "overlay"
+  :exclusive false
+  :focusable false
+  (sysstat-revealer))

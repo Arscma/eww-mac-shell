@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# usage: launch-or-focus <window-class> <command...>
+bin="$(dirname "$0")"
+cls="$1"; shift
+
+read -r addr ws < <(hyprctl clients -j | jq -r --arg c "$cls" '
+  [ .[] | select(.mapped and ((.class | ascii_downcase) == ($c | ascii_downcase))) ][0]
+  | select(. != null) | "\(.address) \(.workspace.name)"')
+
+if [ -n "$addr" ]; then
+  case "$ws" in
+    special*) "$bin/hyprland-minimize" restore "$addr" ;;
+    *)        "$bin/hyprland-minimize" focus "$addr" ;;
+  esac
+else
+  nohup "$@" >/dev/null 2>&1 &
+fi

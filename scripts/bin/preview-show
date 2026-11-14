@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+cd "$(dirname "$0")"
+mkdir -p /tmp/eww-thumbs
+
+cx=$(hyprctl cursorpos -j | jq '.x|floor')
+
+token=$(date +%s%N)
+echo "$token" > /tmp/eww-preview-token
+
+sleep 0.3
+
+[ "$(cat /tmp/eww-preview-token 2>/dev/null)" != "$token" ] && exit 0
+[ "$(eww get dock_in)" != "true" ] && exit 0
+
+items=$(hyprctl clients -j | jq -c --arg c "$1" '[.[]|select(.mapped and ((.class|ascii_downcase)==($c|ascii_downcase)) and ((.workspace.name|startswith("special"))|not))|{title,address,stableId}]')
+[ "$items" = "[]" ] && { eww update preview_open=false; exit 0; }
+for id in $(jq -r '.[].stableId' <<<"$items"); do
+  grim -T "$id" -s 0.25 "/tmp/eww-thumbs/$id.png" 2>/dev/null &
+done
+wait
+
+[ "$(cat /tmp/eww-preview-token 2>/dev/null)" != "$token" ] && exit 0
+[ "$(eww get dock_in)" != "true" ] && exit 0
+
+items=$(jq -c '[.[]|. + {img: "/tmp/eww-thumbs/\(.stableId).png"}]' <<<"$items")
+n=$(jq length <<<"$items"); sw=$(hyprctl monitors -j | jq '.[0].width/.[0].scale|floor'); w=$((n*174+24)); x=$((cx-w/2)); [ $x -gt $((sw-w-8)) ] && x=$((sw-w-8)); [ $x -lt 8 ] && x=8
+eww update preview_x=$x preview_open=true preview_class="$1" preview_items="$items"

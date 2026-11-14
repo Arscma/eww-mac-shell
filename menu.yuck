@@ -1,0 +1,96 @@
+(defvar menu_open false)
+
+(defwindow menu
+    :monitor 0
+    :namespace "eww-menu"
+    :exclusive false
+    :geometry (geometry :width "230px" :x "8px" :y "4px" :anchor "top left")
+    :stacking "fg"
+    :wm-ignore false
+    (revealer :reveal menu_open :transition "slidedown" :duration "200ms"
+        (eventbox
+            (box :class "container" :orientation "vertical" :space-evenly false
+                ;; About This Device
+                (button
+                    :class "item"
+		    :onclick "setsid -f sh -c 'eww update menu_open=false; sh $HOME/.config/eww/scripts/about-device.sh' >/dev/null 2>&1"
+                    (label :xalign 0 :text "About This Device"))
+                
+                ;; Separator 1
+                (box :class "menu-separator" :height 1)
+
+                ;; App Store
+                (button
+                    :class "item"
+                    :onclick "setsid -f sh -c 'eww update menu_open=false; flatpak run io.github.kolunmi.Bazaar' >/dev/null 2>&1"
+                    (label :xalign 0 :text "App Store"))
+
+                ;; Terminal
+                (button
+                    :class "item"
+                    :onclick "setsid -f sh -c 'eww update menu_open=false; foot --working-directory=$HOME' >/dev/null 2>&1"
+                    (label :xalign 0 :text "Terminal"))
+
+		;; Audio
+                (button
+                    :class "item"
+                    :onclick "setsid -f sh -c 'eww update menu_open=false; pavucontrol' >/dev/null 2>&1"
+                    (label :xalign 0 :text "Audio"))
+
+                ;; Separator 2
+                (box :class "menu-separator" :height 1)
+
+                ;; LocalSend
+                (button
+                    :class "item"
+                    :onclick "setsid -f sh -c 'eww update menu_open=false; localsend' >/dev/null 2>&1"
+                    (label :xalign 0 :text "Share"))
+
+                ;; Waydroid
+                (button
+                    :class "item"
+                    :onclick "setsid -f sh -c 'eww update menu_open=false; $HOME/.config/eww/scripts/bin/waydroid-launch' >/dev/null 2>&1"
+                    (label :xalign 0 :text "Android"))
+
+                ;; Timeshift
+                (button
+                    :class "item"
+                    :onclick "setsid -f sh -c 'eww update menu_open=false; timeshift-launcher' >/dev/null 2>&1"
+                    (label :xalign 0 :text "Timeshift"))
+
+                ;; Add App to Dock
+                (button
+                    :class "item"
+                    :onclick "setsid -f sh -c 'eww update menu_open=false; foot -e nano $HOME/.config/eww/scripts/status/pinned.json' >/dev/null 2>&1"
+                    (label :xalign 0 :text "Add App to Dock"))
+
+                ;; Separator 2
+                (box :class "menu-separator" :height 1)
+
+                ;; Lock Screen
+                (button
+                    :class "item"
+                    :onclick "setsid -f sh -c 'eww update menu_open=false; $HOME/.config/eww/apps/Hyprlock/lock.sh' >/dev/null 2>&1"
+                    (label :xalign 0 :text "Lock Screen"))
+
+                ;; Log Out
+                (button
+                    :class "item"
+		    :onclick "setsid -f sh -c 'eww update menu_open=false; hyprctl dispatch \"hl.dsp.exit()\"' >/dev/null 2>&1"
+                    (label :xalign 0 :text "Log Out"))
+
+                ;; Restart
+                (button
+                    :class "item"
+                    :onclick "setsid -f sh -c 'eww update menu_open=false; systemctl reboot' >/dev/null 2>&1"
+                    (label :xalign 0 :text "Restart"))
+
+                ;; Shutdown
+                (button
+                    :class "item"
+                    :onclick "setsid -f sh -c 'eww update menu_open=false; systemctl poweroff' >/dev/null 2>&1"
+                    (label :xalign 0 :text "Shut Down"))
+            )
+        )
+    )
+)

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+get() { pactl get-sink-volume @DEFAULT_SINK@ | grep -oE '[0-9]+%' | head -1 | tr -d '%'; }
+get
+pactl subscribe | grep --line-buffered -E "sink|server" | while read -r _; do get; done

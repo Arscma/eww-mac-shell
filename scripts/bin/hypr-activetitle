@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+hyprctl activewindow -j | jq -nc '
+  def pretty:
+    ascii_downcase as $c
+    | ({
+        "firefox": "Firefox",
+        "kitty": "Foot",
+        "pcmanfm": "Files",
+        "code": "VS Code",
+        "io.mrarm.mcpelauncher-ui-qt": "Minecraft",
+        "org.pwmt.zathura": "Zathura"
+      })[$c]
+      // ($c | split(".") | last | gsub("[-_]"; " ")
+            | split(" ") | map((.[0:1] | ascii_upcase) + .[1:]) | join(" "));
+  [{title: (((try input.class) // "") | if . == "" then "かっこいい！" else pretty end)}]'

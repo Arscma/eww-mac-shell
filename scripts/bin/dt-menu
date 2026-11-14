@@ -1,0 +1,34 @@
+#!/bin/bash
+d="$HOME/.cache/eww-dt"; mkdir -p "$d"
+stamp="$d/.menu-closed"
+
+is_open() { eww active-windows | grep -q '^dt_menu:'; }
+
+do_close() {
+  eww update dt_menu_reveal=false
+  sleep 0.2
+  eww close dt_menu
+  eww update clock_sub=false
+}
+
+do_open() {
+  eww update clock_sub=false
+  eww open dt_menu
+  sleep 0.03
+  eww update dt_menu_reveal=true
+}
+
+case "$1" in
+  close)
+    is_open || exit 0
+    date +%s%N > "$stamp"
+    do_close ;;
+  *)
+    if is_open; then
+      do_close
+    else
+      last=$(cat "$stamp" 2>/dev/null || echo 0)
+      [ $(( $(date +%s%N) - last )) -lt 400000000 ] && exit 0
+      do_open
+    fi ;;
+esac

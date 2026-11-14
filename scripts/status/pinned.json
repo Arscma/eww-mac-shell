@@ -1,0 +1,19 @@
+[
+  {"name": "Files",       "class": "pcmanfm",                      "cmd": "pcmanfm ~",                                 "icon": "system-file-manager"},
+  {"name": "Firefox",     "class": "org.mozilla.firefox",          "cmd": "flatpak run org.mozilla.firefox",           "icon": "firefox"},
+  {"name": "Thunderbird", "class": "org.mozilla.thunderbird_esr",  "cmd": "flatpak run org.mozilla.thunderbird_esr",   "icon": "thunderbird"},
+  {"name": "OnlyOffice",  "class": "onlyoffice",                   "cmd": "flatpak run org.onlyoffice.desktopeditors", "icon": "onlyoffice-desktopeditors"},
+  {"name": "WhatsApp",    "class": "com.ktechpit.whatsie",         "cmd": "flatpak run com.ktechpit.whatsie",          "icon": "whatsapp"},
+  {"name": "Discord",     "class": "discord",                      "cmd": "flatpak run com.discordapp.Discord",        "icon": "discord"},
+  {"name": "YouTube",     "class": "noutube",                      "cmd": "flatpak run jp.nonbili.noutube",            "icon": "youtube"},
+  {"name": "Minecraft",   "class": "io.mrarm.mcpelauncher-ui-qt",  "cmd": "flatpak run io.mrarm.mcpelauncher",         "icon": "minecraft"},
+  {"name": "SKlauncher", "class": "java", "cmd": "$HOME/.local/bin/sklauncher", "icon": "sklauncher"},
+  {"name": "Roblox",     "class": "org.vinegarhq.Sober", "cmd": "flatpak run org.vinegarhq.Sober", "icon": "roblox"},
+  {"name": "Steam",       "class": "steam",                        "cmd": "steam",                                     "icon": "steam"},
+  {"name": "Camera",      "class": "io.github.webcamoid.webcamoid","cmd": "flatpak run io.github.webcamoid.Webcamoid ","icon": "camera"},
+  {"name": "Gallery",     "class": "pixyne",                       "cmd": "flatpak run io.github.vinser.pixyne",       "icon": "gallery"},
+  {"name": "Notes",       "class": "notes",                        "cmd": "flatpak run io.github.nuttyartist.notes",   "icon": "notes"},
+  {"name": "Waypaper",    "class": "waypaper",                     "cmd": "waypaper",                                  "icon": "wallpaper"},
+  {"name": "GIMP",        "class": "org.gimp.GIMP",                "cmd": "flatpak run org.gimp.GIMP",                 "icon": "gimp"},
+  {"name": "OBS",         "class": "com.obsproject.Studio",        "cmd": "flatpak run com.obsproject.Studio",         "icon": "obs"}
+]

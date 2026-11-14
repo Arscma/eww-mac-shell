@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+DOCK_H=90
+ICON_W=72
+EXTRA_W=60
+
+pinfile="$HOME/.config/eww/scripts/status/pinned.json"
+n_pin=$(jq 'length' "$pinfile" 2>/dev/null); n_pin=${n_pin:-1}
+pinned=$(jq -c '[.[].class | ascii_downcase]' "$pinfile" 2>/dev/null); pinned=${pinned:-[]}
+
+jq -n \
+  --argjson m "$(hyprctl monitors -j)" \
+  --argjson c "$(hyprctl clients -j)" \
+  --argjson pin "$pinned" --argjson np "$n_pin" \
+  --argjson dh "$DOCK_H" --argjson iw "$ICON_W" --argjson ew "$EXTRA_W" '
+  ($c | map(select(.mapped and .class != "" and (((.class | ascii_downcase) as $k | ($pin | index($k))) == null)) | .class) | unique | length) as $nt
+  | ($c | map(select(.mapped and (.workspace.name | startswith("special")))) | length) as $nm
+  | (($nt + $np + $nm) * $iw + $ew) as $dw
+  | $m[0] as $mon
+  | ($mon.width / $mon.scale) as $mw
+  | ($mon.height / $mon.scale) as $mh
+  | ($mon.x + $mw/2 - $dw/2) as $dx1
+  | ($mon.x + $mw/2 + $dw/2) as $dx2
+  | ($mon.y + $mh - $dh) as $dy1
+  | ($mon.y + $mh) as $dy2
+  | $mon.activeWorkspace.id as $ws
+  | any($c[];
+      .mapped and (.hidden | not) and .workspace.id == $ws
+      and .at[0] < $dx2 and (.at[0] + .size[0]) > $dx1
+      and .at[1] < $dy2 and (.at[1] + .size[1]) > $dy1)
+' 2>/dev/null || echo false

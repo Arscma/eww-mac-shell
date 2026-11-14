@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+if [ "$(eww get dock_in)" = "false" ] && [ "$(eww get preview_in)" = "false" ]; then
+  eww update preview_open=false dock_hovered=false dock_pseudo_hovered=false
+fi

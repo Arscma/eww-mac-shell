@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+import calendar, json, datetime
+
+t = datetime.date.today()
+weeks = [[{"d": d.day, "o": d.month != t.month, "t": d == t} for d in w]
+         for w in calendar.Calendar(firstweekday=6).monthdatescalendar(t.year, t.month)]
+heads = [{"l": l, "t": i == (t.weekday() + 1) % 7} for i, l in enumerate("SMTWTFS")]
+
+print(json.dumps({
+    "month": t.strftime("%B").upper(),
+    "dayname": t.strftime("%A"),
+    "day": str(t.day),
+    "heads": heads,
+    "weeks": weeks,
+}))

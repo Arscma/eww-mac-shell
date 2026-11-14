@@ -1,0 +1,44 @@
+* {
+  border: none;
+  border-radius: 0;
+  min-height: 0;
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+window#waybar {
+  background: #000000;
+  color: #e6e6e6;
+}
+
+#network,
+#clock,
+#cpu,
+#custom-ram,
+#custom-gpu,
+#custom-cputemp,
+#custom-gputemp,
+#battery,
+#custom-ssdtemp {
+  padding: 0 6px;
+  color: #e6e6e6;
+  background: transparent;
+}
+
+#custom-audio,
+#custom-launcher,
+#custom-power {
+  padding: 0 8px;
+  color: #e05555;
+  background: transparent;
+}
+
+#custom-audio:hover,
+#custom-launcher:hover,
+#custom-power:hover {
+  color: #ff7a7a;
+}
+
+#battery.warning { color: #e6b450; }
+#battery.critical { color: #ff3030; }

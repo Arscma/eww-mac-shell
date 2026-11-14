@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+sig="${HYPRLAND_INSTANCE_SIGNATURE:-$(ls -t "$XDG_RUNTIME_DIR/hypr" | head -1)}"
+sock="$XDG_RUNTIME_DIR/hypr/$sig/.socket2.sock"
+cmd="$(dirname "$0")/dock-cover"
+
+last=$("$cmd"); echo "$last"
+emit() { o=$("$cmd"); [ -n "$o" ] && [ "$o" != "$last" ] && { echo "$o"; last=$o; }; }
+
+coproc SOC { exec socat -u "UNIX-CONNECT:$sock" -; }
+trap 'kill $SOC_PID 2>/dev/null' EXIT TERM INT HUP
+
+while read -r line <&"${SOC[0]}"; do
+  case "${line%%>>*}" in
+    openwindow|closewindow|movewindow*|windowtitle*|activewindow*|workspace*|activespecial*|fullscreen|changefloatingmode)
+      while read -r -t 0.2 _ <&"${SOC[0]}"; do :; done
+      emit
+      sleep 0.3
+      emit
+      ;;
+  esac
+done

@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+dir=/usr/share/icons/WhiteSur/apps/scalable
+fb=/usr/share/icons/WhiteSur/apps@2x/scalable/view-app-grid.svg
+clients=$(hyprctl clients -j)
+
+pinned=$(jq -c '[.[].class | ascii_downcase]' "$HOME/.config/eww/scripts/status/pinned.json" 2>/dev/null)
+[ -z "$pinned" ] && pinned='[]'
+
+pick_icon() {
+  local c="${1,,}"
+  case "$c" in
+    pcmanfm|pcmanfm-qt) set -- pcmanfm system-file-manager file-manager org.gnome.Nautilus nautilus folder ;;
+    *) set -- "$c" ;;
+  esac
+  for n in "$@"; do
+    [ -f "$dir/$n.svg" ] && { echo "$dir/$n.svg"; return; }
+  done
+  echo "$fb"
+}
+
+icons=$(
+  jq -r --argjson pin "$pinned" '.[] | select(.mapped and .class != "" and (((.class | ascii_downcase) as $k | ($pin | index($k))) == null)) | .class' <<<"$clients" | sort -u |
+  while read -r cls; do printf '%s\t%s\n' "$cls" "$(pick_icon "$cls")"; done |
+  jq -Rn '[inputs | split("\t") | {(.[0]): .[1]}] | add // {}'
+)
+
+jq -c --argjson icons "$icons" --argjson pin "$pinned" '
+  [ .[] | select(.mapped and .class != "" and (((.class | ascii_downcase) as $k | ($pin | index($k))) == null)) ]
+  | reduce .[] as $c ([];
+      ($c.class) as $k
+      | if any(.[]; .class == $k) then
+          map(if .class == $k then .tasks += [{title: $c.title, address: $c.address, stableId: $c.stableId}] else . end)
+        else
+          . + [{title: $c.initialTitle, class: $k, icon: $icons[$k],
+                tasks: [{title: $c.title, address: $c.address, stableId: $c.stableId}]}]
+        end)
+' <<<"$clients"

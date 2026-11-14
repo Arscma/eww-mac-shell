@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+eww update control_center_open=false
+hyprctl dispatch "hl.plugin.hyprexpo.expo('toggle')"

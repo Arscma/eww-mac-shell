@@ -1,0 +1,418 @@
+/* ═══════════════════════════════════════════
+   macOS — NOTIFICATION CENTRE
+   Minimal • Transparent • Clean
+   ═══════════════════════════════════════════ */
+
+* {
+  font-family: "Inter", "SF Pro Text", sans-serif;
+  font-size: 17px;
+  color: @theme_fg;
+  border: none;
+  border-radius: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  text-shadow: none;
+  outline: none;
+}
+
+/* Main panel: transparent */
+.control-center {
+  background: transparent;
+  background-color: rgba(225, 225, 225, 0.09);
+
+  border: none;
+  border-radius: 30px;
+
+  padding: 0;
+
+  min-width: 300px;
+}
+
+/* Main container */
+.control-center > box {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Notification list */
+.control-center-list {
+  background: transparent;
+  border: none;
+
+  padding: 0;
+  margin: 0;
+}
+
+/* Remove scroll area background */
+.control-center-list,
+.control-center-list scrolledwindow,
+.control-center-list viewport {
+  background: transparent;
+  border: none;
+}
+
+/* Header */
+.widget-title {
+  background: transparent;
+  border: none;
+
+  padding: 4px 0 12px 0;
+  margin: 0 0 4px 10px;
+}
+
+/* Header text */
+.widget-title label {
+  font-family: "Inter", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+
+  color: #ffffff;
+
+  background: transparent;
+  margin: 0;
+  padding: 0;
+}
+
+/* Clear button */
+.widget-title button {
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+
+  color: rgba(255, 255, 255, 0.92);
+
+  background-color: rgba(255, 255, 255, 0.09);
+
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 999px;
+
+  padding: 5px 12px;
+  margin: 0;
+
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.widget-title button {
+  margin: 3px 10px 0 0;
+}
+
+/* Red hover */
+.widget-title button:hover {
+  background-color: rgba(255, 59, 48, 0.88);
+  color: #ffffff;
+}
+
+/* Notification spacing */
+.control-center .notification-row {
+  background: transparent;
+  border: none;
+
+  margin: 0 0 8px 0;
+  padding: 0;
+}
+
+/* Individual notification card */
+.control-center .notification-background {
+  background-color: rgba(225, 225, 225, 0.09);
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+
+  padding: 12px;
+  margin: 0;
+
+  box-shadow: none;
+
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+/* Actual notification card */
+.control-center .notification-background {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+}
+
+.control-center .notification-background .notification {
+  background-color: rgba(225, 225, 225, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: none;
+}
+
+/* Card hover */
+.control-center
+.notification-row:hover
+.notification-background {
+  background-color: rgba(225, 225, 225, 0.15);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* App name / summary */
+.control-center .notification .summary {
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 650;
+
+  color: #ffffff;
+
+  background: transparent;
+  margin-bottom: 4px;
+}
+
+/* Notification body */
+.control-center .notification .body {
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+
+  color: rgba(255, 255, 255, 0.94);
+
+  background: transparent;
+}
+
+/* Notification timestamp */
+.control-center .notification .time {
+  font-family: "Inter", sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+
+  color: rgba(255, 255, 255, 0.68);
+
+  background: transparent;
+  margin-right: 8px;
+}
+
+/* App icons */
+.control-center .notification image {
+  min-width: 28px;
+  min-height: 28px;
+
+  margin-right: 9px;
+  border-radius: 7px;
+}
+
+/* Notification close button */
+.control-center .close-button {
+  background-color: rgba(255, 255, 255, 0.09);
+
+  border: none;
+  border-radius: 999px;
+
+  min-width: 22px;
+  min-height: 22px;
+
+  padding: 0;
+
+  transition: background-color 180ms ease;
+}
+
+.control-center .close-button:hover {
+  background-color: rgba(255, 59, 48, 0.88);
+}
+
+.control-center .close-button image {
+  min-width: 12px;
+  min-height: 12px;
+
+  margin: 0;
+  color: #ffffff;
+}
+
+/* Hide unused notification actions until needed */
+.control-center .notification-alt-actions {
+  margin-top: 8px;
+}
+
+/* Keep notification action buttons minimal */
+.control-center .notification-action button,
+.control-center .notification-alt-actions button {
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.09);
+
+  border: none;
+  border-radius: 999px;
+
+  padding: 5px 12px;
+  margin: 4px 4px 0 0;
+}
+
+.control-center .notification-action button:hover,
+.control-center .notification-alt-actions button:hover {
+  background-color: rgba(255, 255, 255, 0.20);
+}
+
+/* ── 8. Floating Notifications ─────────────────────────────────── */
+
+/* Notification spacing */
+.floating-notifications {
+  background: transparent;
+}
+
+.floating-notifications .notification-row {
+  margin: 0 0 6px 0;
+  padding: 0;
+  background: transparent;
+}
+
+/* Glass notification card */
+.floating-notifications .notification-background {
+  background-color: rgba(225, 225, 225, 0.09);
+
+  border-top-color: rgba(255, 255, 255, 0.34);
+  border-radius: 14px;
+
+  padding: 10px 12px;
+  margin: 0 8px;
+
+  box-shadow: none;
+
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+/* Hover effect */
+.floating-notifications
+.notification-row:hover
+.notification-background {
+  background-color: rgba(225, 225, 225, 0.15);
+}
+
+/* Notification content */
+.floating-notifications .notification {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+/* Summary / app title */
+.floating-notifications .notification .summary {
+  font-family: "Inter", sans-serif;
+  font-size: 15px;
+  font-weight: 650;
+  color: rgba(255, 255, 255, 0.98);
+
+  margin: 0 0 3px 0;
+  background: transparent;
+}
+
+/* Notification message */
+.floating-notifications .notification .body {
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.92);
+
+  background: transparent;
+}
+
+/* Timestamp */
+.floating-notifications .notification .time {
+  font-family: "Inter", sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.68);
+
+  margin-left: 8px;
+  background: transparent;
+}
+
+/* Application icon */
+.floating-notifications .notification image {
+  min-width: 28px;
+  min-height: 28px;
+
+  margin-right: 9px;
+  border-radius: 7px;
+}
+
+/* Close button */
+.floating-notifications .close-button {
+  background-color: rgba(80, 80, 85, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+
+  min-width: 18px;
+  min-height: 18px;
+  padding: 0;
+
+  transition: background-color 150ms ease;
+}
+
+.floating-notifications .close-button:hover {
+  background-color: rgba(255, 255, 255, 0.24);
+}
+
+.floating-notifications .close-button image {
+  min-width: 10px;
+  min-height: 10px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Action buttons */
+.floating-notifications .notification-action button,
+.floating-notifications .notification-alt-actions button {
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+
+  color: white;
+  background-color: rgba(255, 255, 255, 0.12);
+
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+
+  padding: 5px 10px;
+  margin: 6px 5px 0 0;
+
+  transition: background-color 150ms ease;
+}
+
+.floating-notifications .notification-action button:hover,
+.floating-notifications .notification-alt-actions button:hover {
+  background-color: rgba(255, 255, 255, 0.24);
+}
+
+/* Remove unnecessary backgrounds */
+.floating-notifications .notification-content,
+.floating-notifications .notification-default-action {
+  background: transparent;
+  border: none;
+}
+
+.floating-notifications .notification-content {
+  background: transparent;
+}
+
+.floating-notifications .notification-content image,
+.floating-notifications .notification image,
+.floating-notifications .notification-icon {
+  min-width: 32px;
+  min-height: 32px;
+  margin-right: 10px;
+  border-radius: 7px;
+}
+
+.floating-notifications .notification-content box {
+  background: transparent;
+}
+
+.floating-notifications .notification-content label {
+  background: transparent;
+}

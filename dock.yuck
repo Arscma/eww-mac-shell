@@ -1,0 +1,127 @@
+(defwindow dock_open_area
+    :monitor 0
+    :geometry (geometry :x "0px"
+                        :y "-2px"
+                        :height "1px"
+                        :anchor "bottom center"
+                    )
+        (eventbox
+            :onhover "eww update dock_pseudo_hovered='true'"
+            :onhoverlost "eww update dock_pseudo_hovered='false'"
+	    :width { (arraylength(taskbar_entries) + arraylength(pinned)) * 64 + 132 }
+            :height 8
+            :halign "center"
+        )
+)
+
+(defwindow dock
+    :windowtype "dock"
+    :monitor 0
+    :namespace "eww-dock"
+    :geometry (geometry :x "0px"
+                        :y "0px"
+                        :anchor "bottom center"
+                    )
+    (revealer :reveal "${dock_pseudo_hovered || dock_hovered || (dock_mode == 'smart' && !dock_cover)}" :transition "slideup" :duration "220ms"
+        (eventbox
+            :onhover "eww update dock_in=true dock_hovered=true dock_pseudo_hovered=false"
+            :onhoverlost "eww update dock_in=false; setsid -f ./scripts/bin/dock-leave >/dev/null 2>&1"
+            (box
+                :class "main ${dock_floating ? 'floating' : 'flat'}"
+                :space-evenly false
+                (pinned_apps)
+                (box :class "separator" :visible "${arraylength(taskbar_entries) > 0}")
+                (taskbar)
+                (revealer
+                    :reveal "${arraylength(minimized_windows) > 0}"
+                    :transition "slideright"
+                    :duration "120ms"
+                    (box :class "separator"))
+                (minimized_previews)
+            )
+        )
+    )
+)
+
+(defwidget taskbar[]
+    (box :class "taskbar" :space-evenly false
+        (for entry in taskbar_entries
+            (eventbox
+		:onhover "eww update preview_open=false preview_in=false; setsid -f ./scripts/bin/preview-show ${entry.class} >/dev/null 2>&1"
+                (box :orientation "v" :space-evenly false
+                    (button
+                        :class "entry app"
+                        :onclick "echo x > /tmp/eww-preview-token; eww update preview_open=false dock_in=false dock_hovered=false dock_pseudo_hovered=false; ./scripts/bin/hyprland-minimize focus ${entry.tasks[0].address}"
+                        (image
+                            :class "icon"
+                            :path {entry.icon}
+                            :image-height 49
+                            :image-width 49))
+                    (box :halign "center" :space-evenly false :spacing 3
+		    (box :class "run-ind open")
+		    (box :class "run-ind open" :visible "${arraylength(entry.tasks) >= 2}")
+		    (box :class "run-ind open" :visible "${arraylength(entry.tasks) >= 3}")))))))
+
+(defwidget pinned_apps[]
+    (box :class "taskbar" :space-evenly false
+        (for app in pinned
+            (eventbox
+		:onhover "eww update preview_open=false preview_in=false; setsid -f ./scripts/bin/preview-show ${app.class} >/dev/null 2>&1"
+                (box :orientation "v" :space-evenly false
+                    (button
+                        :class "entry app"
+                        :onclick "echo x > /tmp/eww-preview-token; eww update preview_open=false dock_in=false dock_hovered=false dock_pseudo_hovered=false; ./scripts/bin/launch-or-focus ${app.class} ${app.cmd}"
+			:onrightclick "echo x > /tmp/eww-preview-token; eww update preview_open=false dock_in=false dock_hovered=false dock_pseudo_hovered=false; setsid -f ${app.cmd} >/dev/null 2>&1"
+                        (image
+                            :class "icon"
+                            :path "/usr/share/icons/WhiteSur-dark/apps/scalable/${app.icon}.svg"
+                            :image-height 49
+                            :image-width 49))
+                    (box :halign "center" :space-evenly false :spacing 3
+		    (box :class "run-ind ${app.st}")
+		    (box :class "run-ind open" :visible "${app.n >= 2}")
+		    (box :class "run-ind open" :visible "${app.n >= 3}")))))))
+
+(defwidget minimized_previews[]
+    (revealer
+        :reveal "${arraylength(minimized_windows) > 0}"
+        :transition "slideright"
+        :duration "120ms"
+        (eventbox
+            :onhover "echo x > /tmp/eww-preview-token; eww update preview_open=false preview_in=false"
+            (box
+                :class "minimized_previews"
+                :space-evenly false
+                :spacing 16
+                (for window in minimized_windows
+                    (button
+                        :class "entry app"
+                        :tooltip { window[0] }
+                        :onclick "./scripts/bin/hyprland-minimize restore ${window[1]}"
+                        (image :class "icon" :path "${window[2]}" :image-width 49)))))))
+
+(defwindow dock_preview
+    :monitor 0
+    :namespace "eww-dock-preview"
+    :geometry (geometry :x "0px" :y "96px" :width "100%" :anchor "bottom center")
+    :stacking "overlay"
+    :focusable false
+    (revealer :reveal preview_open :transition "slideup" :duration "100ms"
+        (box :halign "start" :style "margin-left: ${preview_x}px;"
+            (eventbox :onhover "eww update preview_in=true"
+                      :onhoverlost "eww update preview_in=false; setsid -f ./scripts/bin/dock-leave >/dev/null 2>&1"
+                (box :class "preview-card" :space-evenly false :spacing 12
+                    (for t in preview_items
+                        (eventbox :class "preview-item"
+                            :onclick "eww update preview_open=false; ./scripts/bin/hyprland-minimize focus ${t.address}"
+                            (box :orientation "v" :space-evenly false
+                                (box :space-evenly false
+				    :spacing 8
+				    (eventbox
+				        :class "preview-close-btn"
+				        :width 16
+				        :height 16
+				        :onclick "setsid -f ./scripts/bin/preview-close ${t.address} >/dev/null 2>&1"
+				        (label :class "preview-close" :text "×"))
+				    (label :class "preview-title" :hexpand true :halign "start" :limit-width 16 :text {t.title}))
+                                (image :path {t.img} :image-width 150 :image-height 120)))))))))

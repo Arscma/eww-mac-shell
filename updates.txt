@@ -1,0 +1,14 @@
+
+
+
+		whole system updates:
+		sudo pacman -Syu
+
+		update hyprpm (hyprland updates):
+		hyprpm update
+
+		update flatpak:
+		flatpak update
+
+		aur updates (yay):
+		yay -Sua

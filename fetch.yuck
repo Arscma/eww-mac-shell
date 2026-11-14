@@ -1,0 +1,46 @@
+(defvar fetch_open false)
+
+(defpoll fetchinfo :interval "30s" :run-while fetch_open
+  :initial '{"os":"-","wm":"-","user":"-","kernel":"-","shell":"-","pkgs":"-","disk":"-"}'
+  `$HOME/.config/eww/scripts/fetch.sh`)
+
+(defwidget fetch-card []
+  (box :class "fetch-card" :orientation "v" :space-evenly false :spacing 4 :halign "center"
+    (image :class "fetch-logo" :halign "center"
+           :path "${HOME}/.config/eww/assets/fetch.png"
+           :image-width 96 :image-height 96)
+    (box :class "fetch-gap")
+    (label :class "fetch-os"     :halign "center" :text "OS: ${fetchinfo.os}")
+    (label :class "fetch-wm"     :halign "center" :text "WM: ${fetchinfo.wm}")
+    (label :class "fetch-host"   :halign "center" :text "User: ${fetchinfo.user}")
+    (label :class "fetch-kernel" :halign "center" :text "Kernel: ${fetchinfo.kernel}")
+    (label :class "fetch-shell"  :halign "center" :text "Shell: ${fetchinfo.shell}")
+    (label :class "fetch-pkgs"   :halign "center" :text "Packages: ${fetchinfo.pkgs}")
+    (label :class "fetch-disk"   :halign "center" :text "Disk: ${fetchinfo.disk}")
+    (box :class "fetch-gap")
+    (box :class "fetch-palette" :halign "center" :space-evenly false :spacing 2
+      (box :class "fetch-sw" :style "background-color:#a855f7;")
+      (box :class "fetch-sw" :style "background-color:#b05ce2;")
+      (box :class "fetch-sw" :style "background-color:#b862cc;")
+      (box :class "fetch-sw" :style "background-color:#c069b6;")
+      (box :class "fetch-sw" :style "background-color:#c870a1;")
+      (box :class "fetch-sw" :style "background-color:#d0778b;")
+      (box :class "fetch-sw" :style "background-color:#d77d76;")
+      (box :class "fetch-sw" :style "background-color:#df8460;")
+      (box :class "fetch-sw" :style "background-color:#e78b4b;")
+      (box :class "fetch-sw" :style "background-color:#ef9235;")
+      (box :class "fetch-sw" :style "background-color:#f79820;")
+      (box :class "fetch-sw" :style "background-color:#ff9f0a;"))))
+
+(defwidget fetch-revealer []
+  (revealer :reveal fetch_open :transition "slidedown" :duration "250ms"
+    (fetch-card)))
+
+(defwindow fetch
+  :monitor 0
+  :namespace "eww-fetch"
+  :geometry (geometry :x "30px" :y "10px" :width "0px" :height "0px" :anchor "top left")
+  :stacking "overlay"
+  :exclusive false
+  :focusable false
+  (fetch-revealer))

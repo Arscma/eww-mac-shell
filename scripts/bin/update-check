@@ -1,0 +1,21 @@
+#!/bin/sh
+export LC_ALL=C
+cache="$HOME/.cache/eww-update-check.json"
+mkdir -p "$HOME/.cache"
+
+if ! timeout 5 curl -sI https://archlinux.org >/dev/null 2>&1; then
+  if [ -f "$cache" ]; then
+    cat "$cache"
+  else
+    echo '{"pacman":0,"aur":0,"flatpak":0,"total":0}'
+  fi
+  exit 0
+fi
+
+p=$(nice -n 19 ionice -c3 timeout 60 checkupdates 2>/dev/null | wc -l)
+a=$(nice -n 19 timeout 60 yay -Qua 2>/dev/null | wc -l)
+f=$(nice -n 19 timeout 60 flatpak remote-ls --updates 2>/dev/null | wc -l)
+
+out=$(printf '{"pacman":%s,"aur":%s,"flatpak":%s,"total":%s}' "$p" "$a" "$f" "$((p+a+f))")
+echo "$out" > "$cache"
+echo "$out"

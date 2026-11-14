@@ -1,0 +1,4 @@
+#!/bin/bash
+d="$HOME/.cache/eww-dt"; mkdir -p "$d"
+printf '%s\n' "$2" > "$d/$1"
+eww update "$1=$2"

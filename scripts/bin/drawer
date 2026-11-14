@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+dir="$HOME/.config/nwg-drawer"
+css="$HOME/.config/eww/apps/nwg-drawer/drawer.css"
+
+nwg-drawer -s "$css" -ovl -is 72 -c 7 "$@"
+
+if [ -d "$dir" ] && [ "$(ls -A "$dir")" = "drawer.css" ] \
+   && cmp -s "$dir/drawer.css" /usr/share/nwg-drawer/drawer.css; then
+    rm -rf "$dir"
+fi

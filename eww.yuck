@@ -1,0 +1,298 @@
+;; Custom Scripts
+
+(deflisten windows :initial "[{\"title\":\"\"}]" "./scripts/bin/hypr-listen ./scripts/bin/hypr-activetitle")
+(deflisten minimized_windows :initial "[]" "env DEDUPE=1 ./scripts/bin/hypr-listen ./scripts/bin/hyprland-minimize list")
+(deflisten taskbar_entries :initial "[]" "env DEDUPE=1 ./scripts/bin/hypr-listen ./scripts/bin/hyprland-tasks")
+(deflisten dock_cover :initial "false" "./scripts/bin/dock-cover-listen")
+
+;; System info (CLI)
+
+(deflisten media :initial "{\"title\":\"Not Playing\",\"artist\":\"\",\"playing\":false,\"cover_style\":\"background-color: rgba(0,0,0,0.12);\"}" "./scripts/bin/media-listen")
+(defpoll media_t :interval "1s" :initial "{\"pos\":0,\"len\":1}" :run-while control_center_open
+  `playerctl metadata --format '{"pos":{{position}},"len":{{mpris:length}}}' 2>/dev/null || echo '{"pos":0,"len":1}'`)
+(defpoll wifi_name :interval "3s" :initial "" :run-while control_center_open "nmcli -t -f name connection show --active | head -1")
+(defpoll wifi_enabled :interval "3s" :initial "enabled" :run-while control_center_open "nmcli radio wifi")
+(deflisten wifi_state :initial "disconnected" "./scripts/bin/wifi-state")
+(defpoll wifi_strength :interval "10s" "nmcli -f IN-USE,SIGNAL device wifi | awk '/^\*/{if (NR!=1) {print $2}}'")
+(defpoll bt_state :interval "5s" :initial "off"
+  `bluetoothctl show | grep -q 'Powered: yes' && { d=$(bluetoothctl devices Connected | head -1 | cut -d' ' -f3-); echo "\${d:-on}"; } || echo off`)
+(defpoll date_str :interval "60s" "date '+%A, %d %B'")
+
+(defpoll power_profile :interval "5s" :initial "balanced" :run-while control_center_open "powerprofilesctl get")
+(defpoll brightness :interval "2s" :initial "50" "brightnessctl -m | cut -d, -f4 | tr -d '%'")
+
+(deflisten volume :initial "0" "./scripts/bin/volume-listen")
+(deflisten pinned :initial "[]" "env DEDUPE=1 ./scripts/bin/hypr-listen ./scripts/bin/pinned-state")
+
+(deflisten clock_str :initial "--:--"
+  "while true; do date '+%I:%M %p'; sleep $((60 - 10#$(date +%S))); done")
+
+(defpoll clock_svg :interval "1s"
+  :run-while {clock_on && clock_mode == "analog"}
+  :initial ""
+  "./scripts/bin/clock-svg")
+
+(defpoll tz_clocks :interval "1s"
+  :run-while {clock_on && clock_mode == "timezones"}
+  :initial "[]"
+  "./scripts/bin/tz-svg")
+
+(defpoll cal :interval "60s" :run-while calendar_on
+  :initial "{\"month\":\"\",\"dayname\":\"\",\"day\":\"\",\"heads\":[],\"weeks\":[]}"
+  "./scripts/bin/cal-json")
+
+(defpoll weather :interval "30m" :run-while weather_on
+  :initial "{\"days\":[]}"
+  "./scripts/bin/weather-json")
+
+;; State
+
+(defpoll dock_mode :interval "24h" :initial "autohide" "cat $HOME/.config/eww/scripts/status/.dock-mode 2>/dev/null || echo autohide")
+(defvar control_center_open false)
+(defvar dock_hovered false)
+(defvar preview_class "")
+(defvar preview_items "[]")
+(defvar preview_open false)
+(defvar preview_x "0")
+(defvar preview_hover_token "0")
+(defvar dock_in false)
+(defvar preview_in false)
+(defvar dock_pseudo_hovered false)
+(defpoll dock_floating :interval "24h" :initial "true" "cat $HOME/.config/eww/scripts/status/.dock-floating 2>/dev/null || echo true")
+;; (defvar dock_floating true)
+(defvar dt_menu_reveal false)
+(defvar clock_sub false)
+(defvar help_open false)
+(defvar upd_open false)
+(defpoll updates :interval "1h"
+  :initial "{\"pacman\":0,\"aur\":0,\"flatpak\":0,\"total\":0}"
+  "./scripts/bin/update-check")
+(defpoll panel_bg :interval "24h" :initial "shadow" "cat $HOME/.config/eww/scripts/status/.panel-bg 2>/dev/null || echo shadow")
+(defpoll panel_tint :interval "24h" :initial "off" "cat $HOME/.config/eww/scripts/status/.panel-tint 2>/dev/null || echo off")
+
+(defpoll clock_on :interval "24h" :initial "false" "cat $HOME/.cache/eww-dt/clock_on 2>/dev/null || echo false")
+(defpoll calendar_on :interval "24h" :initial "false" "cat $HOME/.cache/eww-dt/calendar_on 2>/dev/null || echo false")
+(defpoll weather_on :interval "24h" :initial "false" "cat $HOME/.cache/eww-dt/weather_on 2>/dev/null || echo false")
+(defpoll clock_mode :interval "24h" :initial "digital" "cat $HOME/.cache/eww-dt/clock_mode 2>/dev/null || echo digital")
+
+;; Imports
+
+(include "./control_center.yuck")
+(include "./dock.yuck")
+(include "./menu.yuck")
+(include "./sysstat.yuck")
+(include "./fetch.yuck")
+
+(defwindow panel
+    :monitor 0
+    :namespace "eww-panel"
+    :exclusive true
+    :geometry (geometry :width "100%" :anchor "top center")
+    :stacking "fg"
+    :reserve (struts :distance "40px" :side "top")
+    :windowtype "dock"
+    :wm-ignore false
+    :class "dark"
+    (box
+        :space-evenly false
+        :class "container ${panel_tint == 'on' ? 'tint' : ''}"
+        (box :space-evenly false :hexpand true :class "section-container"
+            (button :class "section selectable"
+	        :onclick "eww update menu_open=false fetch_open=false sysstat_open=false control_center_open=false; nwg-drawer -s $HOME/.config/eww/apps/nwg-drawer/drawer.css -ovl -is 72 -c 7 &"
+	        :onrightclick "eww update menu_open='${!menu_open}' fetch_open=false"
+	        (label :class "archlogo" :text ""))
+	    (button :class "section selectable" :onclick "foot -e nano $HOME/.config/hypr/hyprland.lua >/dev/null 2>&1 &" "Edit")
+	    (button :class "section selectable ${fetch_open ? 'active' : ''}" :onclick "eww update fetch_open='${!fetch_open}' menu_open=false" "Fetch")
+	    (button :class "section selectable" :onclick "swaync-client -t >/dev/null 2>&1 &" "Notifications")
+            (button :class "section selectable" :onclick "setsid -f ./scripts/bin/workspace-expo >/dev/null 2>&1" "Workspace")
+	    (button :class "section selectable ${help_open ? 'active' : ''}" :onclick "eww update help_open='${!help_open}' menu_open=false fetch_open=false" "Help")
+	    (label :class "menu-sep" :text "|")
+	    (box :class "section selectable activetitle" "${windows[0].title}")
+        )
+        (box :space-evenly false :class "section-container"
+            (tray)
+            (box
+                :class "section"
+                :space-evenly false
+                (revealer :reveal {!calendar_on} :transition "slideleft" :duration "250ms"
+                    (label
+                        :class "selectable panel-clock date-label"
+                        :text date_str))
+		(revealer :reveal {!clock_on} :transition "slideleft" :duration "250ms"
+		    (button
+		        :class "selectable panel-clock clock-btn ${calendar_on ? 'cal' : ''}"
+		        :onclick "setsid -f ./scripts/bin/dt-menu >/dev/null 2>&1"
+			:onrightclick "flatpak run com.betterstickies.BetterStickies >/dev/null 2>&1 &"
+		        {clock_str}))
+		(revealer :reveal {clock_on || calendar_on} :transition "slideright" :duration "250ms"
+		    (button
+		        :class "selectable pill-btn ${calendar_on && clock_on ? 'no-date' : ''}"
+		        :valign "center"
+		        :onclick "setsid -f ./scripts/bin/dt-menu >/dev/null 2>&1"
+		        (box :space-evenly false :spacing 5 :valign "center" :halign "center" (box :class "dt-pill" :valign "center") (box :class "dt-dot" :valign "center"))))
+            )
+        )
+    )
+)
+
+(defwindow panel_shadow
+  :monitor 0
+  :namespace "eww-bar-shadow"
+  :geometry (geometry :width "100%" :height "40px" :y "-40px" :anchor "top center")
+  :stacking "bt"
+  :exclusive false
+  :focusable false
+  (box :class "shadow-box ${panel_bg == 'shadow' ? 'on' : ''}"))
+
+(defwidget tray[]
+    (box :class "section" :space-evenly false :spacing 12
+        (image
+	    :image-width 24
+            :image-height 24
+            :path "/usr/share/icons/WhiteSur/status/32/battery-${round(EWW_BATTERY["BAT0"]["capacity"] / 10, 0) == 0 ? "000" : round(EWW_BATTERY["BAT0"]["capacity"] / 10, 0) == 1 ? "010" : round(EWW_BATTERY["BAT0"]["capacity"] / 10, 0) == 2 ? "020" : round(EWW_BATTERY["BAT0"]["capacity"] / 10, 0) == 3 ? "030" : round(EWW_BATTERY["BAT0"]["capacity"] / 10, 0) == 4 ? "040" : round(EWW_BATTERY["BAT0"]["capacity"] / 10, 0) == 5 ? "050" : round(EWW_BATTERY["BAT0"]["capacity"] / 10, 0) == 6 ? "060" : round(EWW_BATTERY["BAT0"]["capacity"] / 10, 0) == 7 ? "070" : round(EWW_BATTERY["BAT0"]["capacity"] / 10, 0) == 8 ? "080" : round(EWW_BATTERY["BAT0"]["capacity"] / 10, 0) == 9 ? "090" : "100"}${EWW_BATTERY["BAT0"]["status"] == "Charging" ? "-charging" : ""}.svg"
+        )
+        (image
+            :path "/usr/share/icons/WhiteSur-dark/status/symbolic/${bt_state == 'off' ? 'bluetooth-disabled' : 'bluetooth-active'}-symbolic.svg"
+        )
+        (image
+            :path "/usr/share/icons/WhiteSur-dark/status/symbolic/${wifi_state == 'off' ? 'network-wireless-disabled' : wifi_state == 'disconnected' ? 'network-wireless-offline' : wifi_state == 'noinet' ? 'network-wireless-no-route' : wifi_strength == '' ? 'network-wireless-signal-none' : wifi_strength > 66 ? 'network-wireless-signal-excellent' : wifi_strength > 33 ? 'network-wireless-signal-ok' : 'network-wireless-signal-weak'}-symbolic.svg"
+        )
+	(button
+	  :class "selectable tray-toggle ${control_center_open ? 'active' : ''}"
+	  :onclick "eww update control_center_open='${!control_center_open}' sysstat_open=false"
+	  :onrightclick "$HOME/.config/hypr/toggle-dim.sh"
+	  :tooltip "Control Center"
+	  (image :path "/usr/share/icons/WhiteSur-dark/actions/symbolic/settings-symbolic.svg"))
+	(button
+	  :class "selectable tray-toggle ${sysstat_open ? 'active' : ''}"
+	  :tooltip "System Status"
+	  :onclick "eww update sysstat_open='${!sysstat_open}' control_center_open=false"
+	  :onrightclick "./scripts/toggle-blur.sh"
+	  (image :image-width 21 :path "/usr/share/icons/WhiteSur-dark/actions/symbolic/am-system-monitor-symbolic.svg"))
+    )
+)
+(defwindow dt_menu
+  :monitor 0
+  :namespace "eww-dt-menu"
+  :geometry (geometry :x "8px" :y "4px" :anchor "top right")
+  :stacking "overlay"
+  :focusable false
+  (eventbox :onhoverlost "setsid -f ./scripts/bin/dt-menu close >/dev/null 2>&1"
+    (revealer :reveal dt_menu_reveal :transition "slidedown" :duration "180ms"
+      (box :class "container" :orientation "v" :space-evenly false
+      (stack :selected {clock_sub ? 1 : 0} :transition "slideleft" :same-size false
+        (box :orientation "v" :space-evenly false
+          (label :class "dt-title" :halign "center" :text "Widgets")
+          (box :class "menu-separator" :height 1)
+          (button :class "item" :onclick "eww update clock_sub=true" "Clock")
+          (button :class "item" :onclick "setsid -f ./scripts/bin/dt-toggle calendar >/dev/null 2>&1" "Calendar")
+          (button :class "item" :onclick "setsid -f ./scripts/bin/dt-toggle weather >/dev/null 2>&1" "Weather"))
+        (box :orientation "v" :space-evenly false
+          (button :class "item" :onclick "setsid -f ./scripts/bin/dt-clock digital >/dev/null 2>&1" "Digital")
+          (button :class "item" :onclick "setsid -f ./scripts/bin/dt-clock analog >/dev/null 2>&1" "Analog")
+          (button :class "item" :onclick "setsid -f ./scripts/bin/dt-clock timezones >/dev/null 2>&1" "Timezones")))))))
+
+(defwindow help_menu
+  :monitor 0
+  :namespace "eww-help-menu"
+  :geometry (geometry :x "360px" :y "4px" :anchor "top left")
+  :stacking "overlay"
+  :focusable false
+  (eventbox :onhoverlost "eww update help_open=false upd_open=false"
+    (revealer :reveal help_open :transition "slidedown" :duration "180ms"
+      (box :class "container" :orientation "v" :space-evenly false
+        (button :class "item"
+                :onclick "eww update upd_open='${!upd_open}'"
+                :onrightclick "eww update help_open=false upd_open=false; setsid -f foot nano $HOME/.config/eww/updates.txt >/dev/null 2>&1"
+          (box :space-evenly false :spacing 6
+            (label :text "Updates:")
+            (label :class "upd-icon ${updates.total > 30 ? 'bad' : updates.total > 20 ? 'warn' : 'ok'}"
+                   :text {updates.total > 30 ? "" : updates.total > 20 ? "" : ""})
+            (label :text {updates.total})))
+        (revealer :reveal upd_open :transition "slidedown" :duration "180ms"
+          (box :class "upd-body" :orientation "v" :space-evenly false :spacing 2
+            (box :space-evenly false :spacing 6
+              (label :class "upd-g arch" :text "󰣇")
+              (label :halign "start" :text "Pacman: ${updates.pacman}"))
+            (box :space-evenly false :spacing 6
+              (label :class "upd-g aur" :text "")
+              (label :halign "start" :text "AUR: ${updates.aur}"))
+            (box :space-evenly false :spacing 6
+              (label :class "upd-g flatpak" :text "")
+              (label :halign "start" :text "Flatpak: ${updates.flatpak}"))))
+        (box :class "menu-separator" :height 1)
+        (button :class "item"
+                :onclick "eww update help_open=false upd_open=false; setsid -f flatpak run org.mozilla.firefox https://archlinux.org/news/ >/dev/null 2>&1"
+                "Arch News")
+        (button :class "item"
+                :onclick "eww update help_open=false upd_open=false; setsid -f flatpak run org.mozilla.firefox https://hyprland.org/news/ >/dev/null 2>&1"
+                "Hyprland News")))))
+
+(defwindow clock_digital
+  :monitor 0
+  :namespace "eww-clock-widget"
+  :geometry (geometry :x "45px" :y "280px" :anchor "bottom left")
+  :stacking "bg"
+  :focusable false
+  (box :class "clock-card" :halign "center" :valign "center"
+    (label :class "clock-digi"
+           :text {replace(replace(clock_str, " [AP]M", ""), "^0", "")})))
+
+(defwindow clock_analog
+  :monitor 0
+  :namespace "eww-clock-widget"
+  :geometry (geometry :x "45px" :y "280px" :anchor "bottom left")
+  :stacking "bg"
+  :focusable false
+  (box :class "clock-card analog" :halign "center" :valign "center"
+    (image :path clock_svg :image-width 180 :image-height 180)))
+
+(defwindow clock_timezones
+  :monitor 0
+  :namespace "eww-clock-widget"
+  :geometry (geometry :x "45px" :y "280px" :anchor "bottom left")
+  :stacking "bg"
+  :focusable false
+  (box :class "clock-card tz" :halign "center" :valign "center" :space-evenly true :spacing 12
+    (for c in {tz_clocks}
+      (box :orientation "v" :space-evenly false :spacing 2
+        (image :path {c.img} :image-width 88 :image-height 88)
+        (label :class "tz-city" :text {c.city})
+        (label :class "tz-day" :text {c.day})
+        (label :class "tz-off" :text {c.off})))))
+
+(defwindow calendar_widget
+  :monitor 0
+  :namespace "eww-calendar-widget"
+  :geometry (geometry :x "30px" :y "100px" :anchor "bottom right")
+  :stacking "bg"
+  :focusable false
+  (box :class "cal-card" :space-evenly false :spacing 22
+    (box :class "cal-left" :orientation "v" :space-evenly false :valign "start"
+      (label :class "cal-month" :halign "start" :text {cal.month})
+      (label :class "cal-dayname" :halign "start" :text {cal.dayname})
+      (label :class "cal-daynum" :halign "start" :text {cal.day}))
+    (box :class "cal-right" :orientation "v" :space-evenly false :spacing 4
+      (box :class "cal-head-row" :space-evenly true
+        (for h in {cal.heads}
+          (label :class "cal-head ${h.t ? 'today' : ''}" :text {h.l})))
+      (for week in {cal.weeks}
+        (box :space-evenly true
+          (for c in week
+            (label :class "cal-day ${c.t ? 'today' : ''} ${c.o ? 'other' : ''}" :text {c.d})))))))
+
+(defwindow weather_widget
+  :monitor 0
+  :namespace "eww-weather-widget"
+  :geometry (geometry :x "30px" :y "100px" :anchor "bottom left")
+  :stacking "bg"
+  :focusable false
+  (box :class "wx-card" :orientation "v" :space-evenly false :spacing 14
+    (for d in {weather.days}
+      (box :class "wx-row" :space-evenly false :spacing 24
+        (box :space-evenly false :spacing 8 :hexpand true :halign "start"
+          (label :class "wx-day ${d.today ? 'today' : ''}" :text "${d.label} ${d.name}")
+          (label :class "wx-date" :text {d.date}))
+        (box :space-evenly false :spacing 8 :halign "end"
+          (label :class "wx-temp" :text "${d.hi}°/${d.lo}°")
+          (label :class "wx-icon" :text {d.icon}))))))
